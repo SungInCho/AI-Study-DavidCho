@@ -68,5 +68,5 @@ def get_dataloader(data, src_tokenizer, tgt_tokenizer,
         dataset,
         batch_size=batch_size,
         shuffle=shuffle,
-        collate_fn = lambda b: collate_fn(b, src_tokenizer.PAD_IDX, tgt_tokenizer.PAD_IDX)
+        collate_fn=lambda b: collate_fn(b, src_tokenizer.PAD_IDX, tgt_tokenizer.PAD_IDX)
     )

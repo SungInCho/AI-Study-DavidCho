@@ -41,7 +41,7 @@ class DecoderBlock(nn.Module):
         attn_output, _ = self.masked_attention(x, x, x, causal_mask)
         x = self.norm1(x + self.dropout(attn_output))
 
-        # 2. Multi-Head Cross-Attention + Add & Norm
+        # 2. Cross-Attention + Add & Norm
         cross_output, _ = self.cross_attention(x, encoder_output, encoder_output, src_mask)
         x = self.norm2(x + self.dropout(cross_output))
 
