@@ -27,15 +27,18 @@ class Tokenizer:
             pad_id=self.PAD_IDX,
             unk_id=self.UNK_IDX,
             bos_id=self.BOS_IDX,
-            eos_id=self.EOS_IDX
+            eos_id=self.EOS_IDX,
+            input_sentence_size=1000000,
+            shuffle_input_sentence=True, 
+            train_extremely_large_corpus=False
         )
         self.sp.load(f'{model_prefix}.model')
         print(f"Tokenizer trained. Vocab size: {self.vocab_size()}")
 
-    def laod(self, model_path):
+    def load(self, model_path):
         """Load pre-trained tokenizer model"""
         self.sp.load(model_path)
-        print(f"Tokenizer loadeed. Vocab size: {self.vocab_size}")
+        print(f"Tokenizer loaded. Vocab size: {self.vocab_size()}")
 
     def encode(self, text, add_special_tokens=True):
         """
@@ -47,14 +50,14 @@ class Tokenizer:
             ids = [self.BOS_IDX] + ids + [self.EOS_IDX]
         return ids
     
-    def decode(self, ins):
+    def decode(self, ids):
         """
         Token indices -> text
         ex) [2, 23, 145, 3] -> "나는 학교"
         """
         # Remove special tokens
         ids = [i for i in ids if i not in
-               [self.PAD_IDX, self.BOX_IDX, self.EOS_IDX]]
+               [self.PAD_IDX, self.BOS_IDX, self.EOS_IDX]]
         return self.sp.decode(ids)
     
     def vocab_size(self):
