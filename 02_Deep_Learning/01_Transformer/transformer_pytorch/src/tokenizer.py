@@ -10,10 +10,11 @@ class Tokenizer:
         self.UNK_IDX = 1
         self.BOS_IDX = 2  # Beginning of sentence [START]
         self.EOS_IDX = 3  # End of sentence [END]
+        self.MASK_IDX = 4 #   [MASK] for BERT
 
     def train(self, input_file, model_prefix, vocab_size=16000):
         """
-        Train SentencePiece BPE model on corpus
+        Train SentencePiece BPE (Byte Pair Encoding) model on corpus
         input_file    : path to text file (one sentence per line)
         model_prefix  : prefix for saved model files
         vocab_size    : vocabulary size
@@ -28,9 +29,10 @@ class Tokenizer:
             unk_id=self.UNK_IDX,
             bos_id=self.BOS_IDX,
             eos_id=self.EOS_IDX,
-            input_sentence_size=1000000,
+            user_defined_symbols=['[MASK]'],
+            input_sentence_size=200000,
             shuffle_input_sentence=True, 
-            train_extremely_large_corpus=False
+            train_extremely_large_corpus=True
         )
         self.sp.load(f'{model_prefix}.model')
         print(f"Tokenizer trained. Vocab size: {self.vocab_size()}")
