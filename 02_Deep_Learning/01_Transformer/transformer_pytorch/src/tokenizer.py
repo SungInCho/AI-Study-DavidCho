@@ -19,20 +19,26 @@ class Tokenizer:
         model_prefix  : prefix for saved model files
         vocab_size    : vocabulary size
         """
+        print(f"--- Starting SentencePiece training for {model_prefix} ---")
+        
         spm.SentencePieceTrainer.train(
             input=input_file,
+            # sentence_iterator=iter(sentences),
             model_prefix=model_prefix,
             vocab_size=vocab_size,
-            character_coverage=0.9995, # higher for Korean
+            character_coverage=0.999, # higher for Korean
             model_type='bpe',
             pad_id=self.PAD_IDX,
             unk_id=self.UNK_IDX,
             bos_id=self.BOS_IDX,
             eos_id=self.EOS_IDX,
             user_defined_symbols=['[MASK]'],
-            input_sentence_size=200000,
+            input_sentence_size=1000000,
             shuffle_input_sentence=True, 
-            train_extremely_large_corpus=True
+            train_extremely_large_corpus=False,
+            split_by_whitespace=True,
+            byte_fallback=True,
+            num_threads=4
         )
         self.sp.load(f'{model_prefix}.model')
         print(f"Tokenizer trained. Vocab size: {self.vocab_size()}")
