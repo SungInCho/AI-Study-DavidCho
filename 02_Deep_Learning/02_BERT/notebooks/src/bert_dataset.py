@@ -56,7 +56,7 @@ class BERTDataset(Dataset):
             nsp_label = 1
         else:
             # Random sentence
-            rand_idx = random.randint(0, len(self.date) - 1)
+            rand_idx = random.randint(0, len(self.data) - 1)
             sentence_b = self.data[rand_idx]['translation']['en']
             nsp_label = 0
         
@@ -124,43 +124,43 @@ class BERTDataset(Dataset):
 
         return tokens, mlm_labels
     
-    def collate_fn(batch, pad_idx=0):
-        """
-        Collate function:
-        - Pad sequences to max length in batch
-        - Generate padding mask
-        - MLM labels padded with -100 (ignored in loss)
-        """
-        tokens_batch, segment_batch, mlm_batch, nsp_batch = zip(*batch)
+def collate_fn(batch, pad_idx=0):
+    """
+    Collate function:
+    - Pad sequences to max length in batch
+    - Generate padding mask
+    - MLM labels padded with -100 (ignored in loss)
+    """
+    tokens_batch, segment_batch, mlm_batch, nsp_batch = zip(*batch)
 
-        # Pad to max length in batch
-        max_len = max(t.size(0) for t in tokens_batch)
+    # Pad to max length in batch
+    max_len = max(t.size(0) for t in tokens_batch)
 
-        tokens_padded = torch.full((len(tokens_batch), max_len), pad_idx, dtype=torch.long)
-        segment_padded = torch.full((len(tokens_batch), max_len), 0, dtype=torch.long)
-        mlm_padded = torch.full((len(tokens_batch), max_len), -100, dtype=torch.long)
+    tokens_padded = torch.full((len(tokens_batch), max_len), pad_idx, dtype=torch.long)
+    segment_padded = torch.full((len(tokens_batch), max_len), 0, dtype=torch.long)
+    mlm_padded = torch.full((len(tokens_batch), max_len), -100, dtype=torch.long)
 
-        for i, (tokens, segment, mlm) in enumerate(zip(tokens_batch, segment_batch, mlm_batch)):
-            tokens_padded[i, :tokens.size(0)] = tokens
-            segment_padded[i, :segment.size(0)] = segment
-            mlm_padded[i, :mlm.size(0)] = mlm
+    for i, (tokens, segment, mlm) in enumerate(zip(tokens_batch, segment_batch, mlm_batch)):
+        tokens_padded[i, :tokens.size(0)] = tokens
+        segment_padded[i, :segment.size(0)] = segment
+        mlm_padded[i, :mlm.size(0)] = mlm
 
-        # Padding mask: (batch, 1, 1, seq_len) - True where NOT padding
-        mask = (tokens_padded != pad_idx).unsqueeze(1).unsqueeze(2)
+    # Padding mask: (batch, 1, 1, seq_len) - True where NOT padding
+    mask = (tokens_padded != pad_idx).unsqueeze(1).unsqueeze(2)
 
-        nsp_labels = torch.tensor(nsp_batch, dtype=torch.long)
+    nsp_labels = torch.tensor(nsp_batch, dtype=torch.long)
 
-        return tokens_padded, segment_padded, mlm_padded, nsp_labels, mask
-    
-    def get_bert_dataloader(data, tokenizer, batch_size=32,
-                            max_seq_len=512, shuffle=True):
-        """
-        Returns DataLoader for BERT pre-training
-        """
-        dataset = BERTDataset(data, tokenizer, max_seq_len)
-        return DataLoader(
-            dataset,
-            batch_size=batch_size,
-            shuffle=shuffle,
-            collate_fn=lambda b: collate_fn(b, tokenizer.PAD_IDX)
-        )
+    return tokens_padded, segment_padded, mlm_padded, nsp_labels, mask
+
+def get_bert_dataloader(data, tokenizer, batch_size=32,
+                        max_seq_len=512, shuffle=True):
+    """
+    Returns DataLoader for BERT pre-training
+    """
+    dataset = BERTDataset(data, tokenizer, max_seq_len)
+    return DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        collate_fn=lambda b: collate_fn(b, tokenizer.PAD_IDX)
+    )
