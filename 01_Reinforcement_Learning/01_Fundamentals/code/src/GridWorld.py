@@ -1,42 +1,103 @@
 import numpy as np
+import random
 
 class GridWorld:
-    def __init__(self, size=5, obstacles=None):
+    def __init__(self, size=5, obstacles=None, icy_floors=None):
         assert size > 1, f"Grid size must be greater than 1. Received size:{size}."
         self.size = size
         self.agent_pos = None
         self.goal_pos = (size - 1, size - 1)
+        # 0: up, 1: down, 2: left, 3: right
+        self.actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  
+        
         self.obstacles = obstacles if obstacles is not None else []
-        assert not any(pos in self.obstacles for pos in [(0, 0), (size - 1, size - 1)]), f"Obstacles at start or goal position."
-
+        assert not any(pos in self.obstacles for pos in [(0, 0), (size - 1, size - 1)]), f"Obstacles at the start or goal position."
+        
+        self.icy_floors = icy_floors if icy_floors is not None else []
+        assert not any(pos in self.obstacles for pos in self.icy_floors), f"Obstacles above icy floors."
+        
     def reset(self):
         self.agent_pos = (0, 0)
-        return self.agent_pos
+        return self.agent_pos  
     
-    def step(self, action):
-        # 0: up, 1: down, 2: left, 3: right
-        actions = [(1, 0), (-1, 0), (0, -1), (0, 1)]  
-        r, c = self.agent_pos
-        dr, dc = actions[action]
+    def get_transition_prob(self, state, action):
+        action_list = ["Up", "Down", "Left", "Right", "None"]
+        transition = {}
+        r, c = state
+        dr, dc = self.actions[action]
+        next_state = (r + dr, c + dc)
 
-        next_r = max(0, min(self.size - 1, r + dr))
-        next_c = max(0, min(self.size - 1, c + dc))
+        if state in self.icy_floors:
+            p_main, p_i1, p_i2 = 0.8, 0.1, 0.1
+            
+            if action in [0, 1]:
+                action_i1, action_i2 = 2, 3
+            else:
+                action_i1, action_i2 = 0, 1
+            dr_i1, dc_i1 = self.actions[action_i1]
+            dr_i2, dc_i2 = self.actions[action_i2]
+            next_state_i1 = (r + dr_i1, c + dc_i1)
+            next_state_i2 = (r + dr_i2, c + dc_i2)
 
-        next_agent_pos = (next_r, next_c)
+            candidates = [
+                (next_state, p_main, action),
+                (next_state_i1, p_i1, action_i1),
+                (next_state_i2, p_i2, action_i2)
+            ]
 
-        if next_agent_pos in self.obstacles:
-            return self.agent_pos, -1, False
-        elif next_agent_pos == self.goal_pos:
-            self.agent_pos = next_agent_pos
-            return self.agent_pos, +1, True
+            for s_next, prob, move in candidates:
+                r_next, c_next = s_next
+                is_out = not (0 <= r_next <= self.size - 1 and 0 <= c_next <= self.size -1)
+                is_obstacle = s_next in self.obstacles
+                is_goal = s_next == self.goal_pos
+
+                if is_out or is_obstacle:
+                    old_prob, _, _ = transition.get(state, (0, -1, action_list[4]))
+                    transition[state] = (old_prob + prob, -1, action_list[4])
+                elif is_goal:
+                    old_prob, _, _ = transition.get(s_next, (0, 1, action_list[move]))
+                    transition[s_next] = (old_prob + prob, 1, action_list[move])
+                else:
+                    old_prob, _, _ = transition.get(s_next, (0, -0.1, action_list[move]))
+                    transition[s_next] = (old_prob + prob, -0.1, action_list[move])
         else:
-            self.agent_pos = next_agent_pos
-            return self.agent_pos, -0.1, False
+            r_next, c_next = next_state
+            is_out = not (0 <= r_next <= self.size - 1 and 0 <= c_next <= self.size -1)
+            is_obstacle = next_state in self.obstacles
+            is_goal = next_state == self.goal_pos
+
+            if is_out or is_obstacle:
+                transition[state] = (1, -1, action_list[4])
+            elif is_goal:
+                transition[next_state] = (1, 1, action_list[action])
+            else:
+                transition[next_state] = (1, -0.1, action_list[action])
+
+        return transition
+
+    def step(self, action):
+        transition = self.get_transition_prob(self.agent_pos, action)
+        next_states = list(transition.keys())
+        probs = list(v[0] for v in transition.values())
+
+        next_state = random.choices(next_states, probs, k=1)[0]
+
+        self.agent_pos = next_state
+        reward = transition[next_state][1]
+        move = transition[next_state][2]
+
+        if next_state == self.goal_pos:
+            return next_state, reward, move, True
+        
+        else:
+            return next_state, reward, move, False
         
     def render(self):
         grid = np.full((self.size, self.size), '.')
         for obs in self.obstacles:
             grid[obs] = 'X'
+        for obs in self.icy_floors:
+            grid[obs] = 'O'
         grid[self.goal_pos] = 'G'
         grid[self.agent_pos] = 'A'
         print('\n'.join([' '.join(row) for row in grid]))
