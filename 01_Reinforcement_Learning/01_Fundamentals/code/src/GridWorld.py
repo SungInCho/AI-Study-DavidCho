@@ -9,13 +9,21 @@ class GridWorld:
         self.goal_pos = (size - 1, size - 1)
         # 0: up, 1: down, 2: left, 3: right
         self.actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  
+        self.states = [(r, c) for r in range(size) for c in range(size)]
         
         self.obstacles = obstacles if obstacles is not None else []
         assert not any(pos in self.obstacles for pos in [(0, 0), (size - 1, size - 1)]), f"Obstacles at the start or goal position."
         
         self.icy_floors = icy_floors if icy_floors is not None else []
         assert not any(pos in self.obstacles for pos in self.icy_floors), f"Obstacles above icy floors."
-        
+    
+    def state_to_index(self, state):
+        r, c = state
+        return int(r * self.size + c)
+    
+    def index_to_state(self, ind):
+        return (int(ind // self.size), int(ind % self.size))
+    
     def reset(self):
         self.agent_pos = (0, 0)
         return self.agent_pos  
@@ -75,6 +83,18 @@ class GridWorld:
 
         return transition
 
+    def get_dynamics_rewards(self):
+        dynamics = np.zeros((len(self.states), len(self.actions), len(self.states)))
+        rewards = np.zeros((len(self.states), len(self.actions), len(self.states)))
+        for r in range(self.size):
+            for c in range(self.size):
+                for act in range(len(self.actions)):
+                    transition = self.get_transition_prob((r,c), act)
+                    for state, (prob, reward, _) in transition.items():
+                        dynamics[self.state_to_index((r,c)), act, self.state_to_index(state)] = prob
+                        rewards[self.state_to_index((r,c)), act, self.state_to_index(state)] = reward
+        return dynamics, rewards
+    
     def step(self, action):
         transition = self.get_transition_prob(self.agent_pos, action)
         next_states = list(transition.keys())
