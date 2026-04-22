@@ -5,15 +5,16 @@ class GridWorld:
     def __init__(self, size=5, obstacles=None, icy_floors=None):
         assert size > 1, f"Grid size must be greater than 1. Received size:{size}."
         self.size = size
-        self.agent_pos = None
-        self.goal_pos = (size - 1, size - 1)
+        self.cur_state = None
+        self.T_state = (size - 1, size - 1)
         # 0: up, 1: down, 2: left, 3: right
         self.actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  
         self.states = [(r, c) for r in range(size) for c in range(size)]
         
         self.obstacles = obstacles if obstacles is not None else []
+        self.valid_states = [s for s in self.states if s not in self.obstacles and s != self.T_state]
         assert not any(pos in self.obstacles for pos in [(0, 0), (size - 1, size - 1)]), f"Obstacles at the start or goal position."
-        
+
         self.icy_floors = icy_floors if icy_floors is not None else []
         assert not any(pos in self.obstacles for pos in self.icy_floors), f"Obstacles above icy floors."
     
@@ -25,11 +26,10 @@ class GridWorld:
         return (int(ind // self.size), int(ind % self.size))
     
     def reset(self):
-        self.agent_pos = (0, 0)
-        return self.agent_pos  
+        self.cur_state = (0, 0)
+        return 
     
     def get_transition_prob(self, state, action):
-        action_list = ["Up", "Down", "Left", "Right", "None"]
         transition = {}
         r, c = state
         dr, dc = self.actions[action]
@@ -57,29 +57,29 @@ class GridWorld:
                 r_next, c_next = s_next
                 is_out = not (0 <= r_next <= self.size - 1 and 0 <= c_next <= self.size -1)
                 is_obstacle = s_next in self.obstacles
-                is_goal = s_next == self.goal_pos
+                is_goal = s_next == self.T_state
 
                 if is_out or is_obstacle:
-                    old_prob, _, _ = transition.get(state, (0, -1, action_list[4]))
-                    transition[state] = (old_prob + prob, -1, action_list[4])
+                    old_prob, _, _ = transition.get(state, (0, -1, 4))
+                    transition[state] = (old_prob + prob, -1, 4)
                 elif is_goal:
-                    old_prob, _, _ = transition.get(s_next, (0, 1, action_list[move]))
-                    transition[s_next] = (old_prob + prob, 1, action_list[move])
+                    old_prob, _, _ = transition.get(s_next, (0, 1, move))
+                    transition[s_next] = (old_prob + prob, 1, move)
                 else:
-                    old_prob, _, _ = transition.get(s_next, (0, -0.1, action_list[move]))
-                    transition[s_next] = (old_prob + prob, -0.1, action_list[move])
+                    old_prob, _, _ = transition.get(s_next, (0, -0.1, move))
+                    transition[s_next] = (old_prob + prob, -0.1, move)
         else:
             r_next, c_next = next_state
             is_out = not (0 <= r_next <= self.size - 1 and 0 <= c_next <= self.size -1)
             is_obstacle = next_state in self.obstacles
-            is_goal = next_state == self.goal_pos
+            is_goal = next_state == self.T_state
 
             if is_out or is_obstacle:
-                transition[state] = (1, -1, action_list[4])
+                transition[state] = (1, -1, 4)
             elif is_goal:
-                transition[next_state] = (1, 1, action_list[action])
+                transition[next_state] = (1, 1, action)
             else:
-                transition[next_state] = (1, -0.1, action_list[action])
+                transition[next_state] = (1, -0.1, action)
 
         return transition
 
@@ -96,17 +96,17 @@ class GridWorld:
         return dynamics, rewards
     
     def step(self, action):
-        transition = self.get_transition_prob(self.agent_pos, action)
+        transition = self.get_transition_prob(self.cur_state, action)
         next_states = list(transition.keys())
         probs = list(v[0] for v in transition.values())
 
         next_state = random.choices(next_states, probs, k=1)[0]
 
-        self.agent_pos = next_state
+        self.cur_state = next_state
         reward = transition[next_state][1]
         move = transition[next_state][2]
 
-        if next_state == self.goal_pos:
+        if next_state == self.T_state:
             return next_state, reward, move, True
         
         else:
@@ -118,7 +118,7 @@ class GridWorld:
             grid[obs] = 'X'
         for obs in self.icy_floors:
             grid[obs] = 'O'
-        grid[self.goal_pos] = 'G'
-        grid[self.agent_pos] = 'A'
+        grid[self.T_state] = 'G'
+        grid[self.cur_state] = 'A'
         print('\n'.join([' '.join(row) for row in grid]))
         print()
