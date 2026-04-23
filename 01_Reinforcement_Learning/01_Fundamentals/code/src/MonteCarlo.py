@@ -118,11 +118,70 @@ class MonteCarlo:
             num_iter += 1
         
         return policy, Q
+    
+    def make_eps_greedy(self, Q, epsilon=0.1):
+        policy = np.full((len(self.states), len(self.actions)), epsilon / len(self.actions))
+        greedy_A = np.argmax(Q, axis=1)
+        for s in range(len(self.states)):
+            policy[s, greedy_A[s]] += 1 - epsilon
+        return policy
 
+    def onpolicy(self, max_steps = 100, gamma = 0.99, visit="first", max_iter = 10000, epsilon=0.1):
+        assert visit in ["first", "every"], f"visit must be either \"fisrt\" or \"every\"."
 
-
-
-
-
-       
+        min_prob = epsilon / len(self.actions)
+        remaining = 1 - min_prob * len(self.actions)
+        policy = np.random.dirichlet(np.ones(len(self.actions)), size=len(self.states)) * remaining + min_prob
+        Q = np.zeros((len(self.states), len(self.actions)))
         
+        count_sa = defaultdict(int)
+        num_iter= 0
+        while num_iter < max_iter:
+            episode = self.gen_episodes(policy, 1, max_steps, False)[0]
+            G = 0
+            sa_counts = Counter((s,a) for s, a, _ in episode)
+            
+            for s, a, r in reversed(episode):
+                G = r + gamma * G
+
+                if visit == "first":
+                    sa_counts[(s, a)] -= 1
+                    if sa_counts[(s, a)] == 0:
+                        count_sa[(s, a)] += 1
+                        Q[s, a] += (G - Q[s, a]) / count_sa[(s, a)]
+                else:
+                    count_sa[(s, a)] += 1
+                    Q[s, a] += (G - Q[s, a]) / count_sa[(s, a)]
+            
+            policy = self.make_eps_greedy(Q, epsilon)
+            num_iter += 1
+        
+        return policy, Q
+
+    def offpolicy_pred(self, target_policy, max_steps = 100, gamma = 0.99, max_iter = 10000, epsilon=0.1):
+        min_prob = epsilon / len(self.actions)
+        remaining = 1 - min_prob * len(self.actions)
+        b_policy = np.random.dirichlet(np.ones(len(self.actions)), size=len(self.states)) * remaining + min_prob
+        Q = np.zeros((len(self.states), len(self.actions)))
+        C = np.zeros((len(self.states), len(self.actions)))
+
+        num_iter = 0
+        while num_iter < max_iter:
+            episode = self.gen_episodes(b_policy, 1, max_steps, False)[0]
+            G = 0
+            W = 1
+            sa_counts = Counter((s, a) for s, a, _ in episode)
+            for s, a, r in reversed(episode):
+                G = r + gamma * G
+
+                sa_counts[(s, a)] -= 1
+                if sa_counts[(s, a)] == 0:
+                    if W == 0:
+                        break
+                    C[s, a] += W
+                    Q[s, a] += (W / C[s, a]) * (G - Q[s, a])
+                    W *=  target_policy[s, a] / b_policy[s, a]
+            num_iter += 1
+
+        return Q
+                    
