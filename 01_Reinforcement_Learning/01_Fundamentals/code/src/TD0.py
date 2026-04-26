@@ -50,8 +50,12 @@ class TD0:
     def SARSA(self, alpha = 0.1, gamma = 0.99, max_steps=1000, max_iter=10000):
         Q = np.zeros((len(self.states), len(self.actions)))
 
+        Q_history = []
+        step_history = []
         n_iter = 0
         while n_iter < max_iter:
+            Q_old = Q.copy()
+
             n_iter += 1
             epsilon = 1 / n_iter
             self.env.reset()
@@ -76,5 +80,117 @@ class TD0:
 
                 Q[cur_state_idx, cur_a] += alpha * (r + gamma * Q[next_state_idx, next_a] - Q[cur_state_idx, cur_a])
                 cur_state_idx, cur_a = next_state_idx, next_a
+
+            Q_history.append(np.mean(Q)) 
+            step_history.append(n_steps)
+                
         
-        return policy_Q, Q
+        return policy_Q, Q, Q_history, step_history
+    
+    def QL(self, alpha = 0.1, gamma = 0.99, max_steps=1000, max_iter=10000):
+        Q = np.zeros((len(self.states), len(self.actions)))
+
+        Q_history = []
+        step_history = []
+        n_iter = 0
+        while n_iter < max_iter:
+            Q_old = Q.copy()
+
+            n_iter += 1
+            self.env.reset()
+
+            n_steps = 0
+            done = False
+            epsilon = 1 / n_iter
+            while not done and n_steps <= max_steps:
+                n_steps += 1
+                cur_state_idx = self.env.state_to_index(self.env.cur_state)
+
+                greedy_A = np.argmax(Q, axis = 1)
+                policy_Q = np.full((len(self.states), len(self.actions)), epsilon / len(self.actions))
+                policy_Q[np.arange(len(self.states)), greedy_A] += 1 - epsilon
+                cur_a = np.random.choice(len(self.actions), p = policy_Q[cur_state_idx])
+                
+                next_s, r, _, done = self.env.step(cur_a)
+                next_s_idx = self.env.state_to_index(next_s)
+
+                Q[cur_state_idx, cur_a] += alpha * (r + gamma * np.max(Q[next_s_idx]) - Q[cur_state_idx, cur_a])
+            
+            Q_history.append(np.mean(Q)) 
+            step_history.append(n_steps)
+        
+        return policy_Q, Q, Q_history, step_history
+
+    def ESARSA(self, alpha = 0.1, gamma = 0.99, max_steps=1000, max_iter=10000):
+        Q = np.zeros((len(self.states), len(self.actions)))
+
+        Q_history = []
+        step_history = []
+        n_iter = 0
+        while n_iter < max_iter:
+            Q_old = Q.copy()
+
+            n_iter += 1
+            self.env.reset()
+
+            n_steps = 0
+            done = False
+            epsilon = 1 / n_iter
+            while not done and n_steps <= max_steps:
+                n_steps += 1
+                cur_state_idx = self.env.state_to_index(self.env.cur_state)
+
+                greedy_A = np.argmax(Q, axis = 1)
+                policy_Q = np.full((len(self.states), len(self.actions)), epsilon / len(self.actions))
+                policy_Q[np.arange(len(self.states)), greedy_A] += 1 - epsilon
+                cur_a = np.random.choice(len(self.actions), p = policy_Q[cur_state_idx])
+                
+                next_s, r, _, done = self.env.step(cur_a)
+                next_s_idx = self.env.state_to_index(next_s)
+
+                Q[cur_state_idx, cur_a] += alpha * (r + gamma * np.sum(policy_Q[next_s_idx] * Q[next_s_idx]) - Q[cur_state_idx, cur_a])
+            
+            Q_history.append(np.mean(Q)) 
+            step_history.append(n_steps)
+
+        return policy_Q, Q, Q_history, step_history
+
+    def DQL(self, alpha = 0.1, gamma = 0.99, max_steps = 1000, max_iter=10000):
+        Q1 = np.zeros((len(self.states), len(self.actions)))
+        Q2 = np.zeros((len(self.states), len(self.actions)))
+        Q = (Q1 + Q2) / 2
+
+        Q_history = []
+        step_history = []
+        n_iter = 0
+        while n_iter < max_iter:
+            Q_old = Q.copy()
+
+            n_iter += 1
+            self.env.reset()
+
+            n_steps = 0
+            done = False
+            epsilon = 1 / n_iter
+            while not done and n_steps <= max_steps:
+                n_steps += 1
+                cur_state_idx = self.env.state_to_index(self.env.cur_state)
+                
+                greedy_A = np.argmax(Q, axis = 1)
+                policy_Q = np.full((len(self.states), len(self.actions)), epsilon / len(self.actions))
+                policy_Q[np.arange(len(self.states)), greedy_A] += 1 - epsilon
+                cur_a = np.random.choice(len(self.actions), p = policy_Q[cur_state_idx])
+                next_s, r, _, done = self.env.step(cur_a)
+                next_s_idx = self.env.state_to_index(next_s)
+                
+                if random.random() <= 0.5:
+                    Q1[cur_state_idx, cur_a] += alpha * (r + gamma * Q2[next_s_idx, np.argmax(Q1[next_s_idx])] - Q1[cur_state_idx, cur_a])
+                else:
+                    Q2[cur_state_idx, cur_a] += alpha * (r + gamma * Q1[next_s_idx, np.argmax(Q2[next_s_idx])] - Q2[cur_state_idx, cur_a])
+                
+                Q = (Q1 + Q2) / 2
+            Q_history.append(np.mean(Q)) 
+            step_history.append(n_steps)
+        
+        return policy_Q, Q, Q_history, step_history
+
