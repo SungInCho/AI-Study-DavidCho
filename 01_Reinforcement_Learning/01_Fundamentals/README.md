@@ -36,7 +36,7 @@ A custom GridWorld environment built from scratch with stochastic dynamics.
 | File | Description |
 |------|-------------|
 | [`code/src/GridWorld.py`](code/src/GridWorld.py) | GridWorld environment class |
-| [`code/GridWorld.ipynb`](code/GridWorld.ipynb) | Environment tests & visualization |
+| [`code/GridWorld_test.ipynb`](code/GridWorld_test.ipynb) | Environment tests & visualization |
 | [`notes/GridWorld.md`](notes/GridWorld.md) | Concepts & notes |
 
 **Features:**
@@ -53,9 +53,9 @@ DP algorithms assuming full knowledge of environment dynamics.
 | File | Description |
 |------|-------------|
 | [`code/src/DP_policyeval.py`](code/src/DP_policyeval.py) | Policy Evaluation |
-| [`code/src/DP_policy_iteration.py`](code/src/DP_policy_iteration.py) | Policy Iteration |
+| [`code/src/DP_policyiter.py`](code/src/DP_policyiter.py) | Policy Iteration |
 | [`code/src/DP_valueiter.py`](code/src/DP_valueiter.py) | Value Iteration |
-| [`code/DP.ipynb`](code/DP.ipynb) | DP experiments & comparisons |
+| [`code/Dynamic_Programming.ipynb`](code/Dynamic_Programming.ipynb) | DP experiments & comparisons |
 | [`notes/DynamicProgramming.md`](notes/DynamicProgramming.md) | Concepts & notes |
 
 **Algorithms:**
@@ -90,7 +90,7 @@ Model-free methods that update at every step without waiting for episode end.
 | File | Description |
 |------|-------------|
 | [`code/src/TD0.py`](code/src/TD0.py) | All TD methods |
-| [`code/TD.ipynb`](code/TD.ipynb) | TD experiments & comparisons |
+| [`code/TemporalDifference.ipynb`](code/TemporalDifference.ipynb) | TD experiments & comparisons |
 | [`notes/TemporalDifference.md`](notes/TemporalDifference.md) | Concepts & notes |
 
 **Algorithms:**
