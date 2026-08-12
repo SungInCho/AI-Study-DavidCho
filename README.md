@@ -8,9 +8,9 @@ Personal study notes, paper reviews, and algorithm implementations on AI topics 
 
 AI-From-Scratch-Playground/
 ├── 01_Reinforcement_Learning/
-│ ├── 00_Fundamentals/ # DP, MC, TD algorithms
+│ ├── 00_Fundamentals/ # DP, MC (Dynamic Programming, Monte Carlo)
 │ ├── 01_Policy_Optimization/ # REINFORCE, A2C/A3C, TRPO, PPO
-│ └── 02_Q_Learning/ # TD0 (SARSA, Q-learning, Expected SARSA, Double Q-learning)
+│ └── 02_Q_Learning/ TD0 (SARSA, Q-learning, Expected SARSA, Double Q-learning), DQN, C51, QR-DQN, HER
 ├── 02_Deep_Learning/
 │ ├── 01_Transformer/ # Transformer from scratch + PyTorch
 │ └── 02_BERT/ # BERT implementation & sentiment analysis
@@ -19,29 +19,13 @@ AI-From-Scratch-Playground/
 
 ---
 
-## 📌 Topics
-
-| Folder | Topic |
-|--------|-------|
-| `01_Reinforcement_Learning/00_Fundamentals` | GridWorld, DP, MC, TD |
-| `01_Reinforcement_Learning/01_Policy_Optimization` | REINFORCE, A2C/A3C, TRPO |
-| `01_Reinforcement_Learning/02_Q_Learning` | SARSA, Q-learning, Expected SARSA, Double Q-learning |
-| `02_Deep_Learning/01_Transformer` | Transformer from scratch |
-| `02_Deep_Learning/02_BERT` | BERT & Sentiment Analysis |
-
----
-
 ## 📖 Reference
 
-**00_Fundamentals**
-- Sutton, R. S., & Barto, A. G. (2018). *Reinforcement Learning: An Introduction* (2nd ed.). MIT Press.
+**01_Reinforcement_Learning**
+- Sutton & Barto, *Reinforcement Learning: An Introduction*
+- Williams (1992), *Simple Statistical Gradient-Following Algorithms for Connectionist Reinforcement Learning*
+- Schulman et al. (2015), *Trust Region Policy Optimization*
 
-**01_Policy_Optimization/01_Policy_Gradient/01_REINFORCE**
-- Williams, R. J. (1992). *Simple Statistical Gradient-Following Algorithms for Connectionist Reinforcement Learning*. Machine Learning, 8(3-4), 229-256.
-
-**01_Policy_Optimization/02_A2C_A3C/01_Vanilla_AC**
-- Sutton, R. S., & Barto, A. G. (2018). *Reinforcement Learning: An Introduction* (2nd ed.), Ch. 13 (Policy Gradient Methods / Actor-Critic).
-
-**01_Policy_Optimization/03_TRPO**
-- Schulman, J., et al. (2015). *Trust Region Policy Optimization*.
-- Schulman, J., et al. (2015). *High-Dimensional Continuous Control Using Generalized Advantage Estimation*.
+**02_Deep_Learning**
+- Vaswani et al., *Attention Is All You Need*
+- Devlin et al., *Pre-training of Deep Bidirectional Transformers for Language Understanding* (BERT)
