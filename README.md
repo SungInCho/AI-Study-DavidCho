@@ -6,6 +6,7 @@ Personal study notes, paper reviews, and algorithm implementations on AI topics 
 
 ## 📁 Structure
 
+```
 AI-From-Scratch-Playground/
 ├── 01_Reinforcement_Learning/
 │ ├── 00_Fundamentals/ # DP, MC (Dynamic Programming, Monte Carlo)
@@ -16,6 +17,7 @@ AI-From-Scratch-Playground/
 │ └── 02_BERT/ # BERT implementation & sentiment analysis
 ├── 03_Machine_Learning/
 └── 04_NLP/
+```
 
 ---
 
